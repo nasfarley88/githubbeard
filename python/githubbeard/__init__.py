@@ -1,9 +1,10 @@
+from functools import partial, wraps
+
 from skybeard.beards import BeardChatHandler
 from skybeard.bearddbtable import BeardDBTable
 from skybeard.utils import get_beard_config, get_args
 from skybeard.decorators import onerror
 from skybeard.mixins import PaginatorMixin
-
 
 from github import Github
 from github.GithubException import UnknownObjectException
@@ -15,6 +16,25 @@ import logging
 logger = logging.getLogger(__name__)
 
 CONFIG = get_beard_config()
+
+
+def get_args_as_str_or_ask(text):
+    return partial(_get_args_as_str_or_ask_decorator, text=text)
+
+
+def _get_args_as_str_or_ask_decorator(f, text):
+    @wraps(f)
+    async def g(beard, msg):
+        args = get_args(msg, return_string=True)
+        if not args:
+            await beard.sender.sendMessage(text)
+            resp = await beard.listener.wait()
+
+            args = resp['text']
+
+        await f(beard, msg, args)
+
+    return g
 
 
 class GithubBeard(PaginatorMixin, BeardChatHandler):
@@ -43,11 +63,12 @@ class GithubBeard(PaginatorMixin, BeardChatHandler):
         self.search_repos_results = BeardDBTable(self, 'search_repos_results')
 
     @onerror
-    async def search_repos(self, msg):
+    @get_args_as_str_or_ask("What would you like to search?")
+    async def search_repos(self, msg, args):
 
-        args = get_args(msg, return_string=True)
-        if not args:
-            await self.sender.sendMessage("No search term given")
+        # args = get_args(msg, return_string=True)
+        # if not args:
+        #     await self.sender.sendMessage("No search term given")
         await self.sender.sendChatAction('typing')
         search_results = self.github.search_repositories(args)
         search_results = [i for i in search_results[:30]]
