@@ -1,9 +1,4 @@
-import pickle
-import dill
-from telepot import glance, message_identifier
-from telepot.namedtuple import InlineKeyboardMarkup, InlineKeyboardButton
-
-from skybeard.beards import BeardChatHandler, ThatsNotMineException
+from skybeard.beards import BeardChatHandler
 from skybeard.bearddbtable import BeardDBTable
 from skybeard.utils import get_beard_config, get_args
 from skybeard.decorators import onerror
@@ -33,9 +28,12 @@ class GithubBeard(PaginatorMixin, BeardChatHandler):
          "Gets information about given repo specifed in 1st arg."),
         ("getpr", "get_pending_pulls",
          "Gets pending pull requests from specified repo (1st arg)"),
-        ("getdefaultrepo", "get_default_repo", "Gets default repo for this chat."),
-        ("setdefaultrepo", "set_default_repo", "Sets default repo for this chat."),
-        ("searchrepos", "search_repos", "Searches for repositories in github."),
+        ("getdefaultrepo", "get_default_repo",
+         "Gets default repo for this chat."),
+        ("setdefaultrepo", "set_default_repo",
+         "Sets default repo for this chat."),
+        ("searchrepos", "search_repos",
+         "Searches for repositories in github."),
     ]
 
     def __init__(self, *args, **kwargs):
