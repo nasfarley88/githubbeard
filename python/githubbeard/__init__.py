@@ -124,12 +124,11 @@ class GithubBeard(PaginatorMixin, BeardChatHandler):
         """Send a message explaining the user was not found."""
         await self.sender.sendMessage("User not found.")
 
-    @onerror("Failed to get repo info. No argument provided?")
-    async def get_repo(self, msg):
+    @onerror("Failed to get repo info.")
+    @get_args_as_str_or_ask("Which repo would you like to get?")
+    async def get_repo(self, msg, args):
         """Gets information about a github repo."""
-        args = get_args(msg)
-
-        repo = self.github.get_repo(args[0])
+        repo = self.github.get_repo(args)
         await self.sender.sendMessage("Repo name: {}".format(repo.name))
         await self.sender.sendMessage("Repo str: {}".format(repo))
 
