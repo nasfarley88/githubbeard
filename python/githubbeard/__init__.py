@@ -110,17 +110,13 @@ class GithubBeard(PaginatorMixin, BeardChatHandler):
                 await self.sender.sendMessage("No repo set.")
 
     @onerror
-    async def set_default_repo(self, msg):
-        args = get_args(msg)
+    @get_args_as_str_or_ask("What would you like the default repo to be?")
+    async def set_default_repo(self, msg, args):
         with self.default_repo_table as table:
-            try:
-                entry = table.insert(dict(chat_id=self.chat_id, repo=args[0]))
-            except IndexError:
-                await self.sender.sendMessage("No argument given for repo name.")
-                return
+            entry = table.insert(dict(chat_id=self.chat_id, repo=args))
 
             if entry:
-                await self.sender.sendMessage("Repo set to: {}".format(args[0]))
+                await self.sender.sendMessage("Repo set to: {}".format(args))
             else:
                 raise Exception("Not sure how, but the entry failed to be got?")
 
