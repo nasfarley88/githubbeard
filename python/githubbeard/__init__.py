@@ -79,8 +79,8 @@ class GithubBeard(PaginatorMixin, BeardChatHandler):
     async def get_repo(self, msg, args):
         """Gets information about a github repo."""
         repo = self.github.get_repo(args)
-        await self.sender.sendMessage("Repo name: {}".format(repo.name))
-        await self.sender.sendMessage("Repo str: {}".format(repo))
+        await self.sender.sendMessage(await format_.make_repo_msg_text(repo),
+                                      parse_mode='HTML')
 
     @onerror("Failed to get repo info.")
     async def get_pending_pulls(self, msg):
