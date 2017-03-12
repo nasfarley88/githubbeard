@@ -1,6 +1,6 @@
 from skybeard.beards import BeardChatHandler
 from skybeard.bearddbtable import BeardDBTable
-from skybeard.utils import get_beard_config, get_args
+from skybeard.utils import get_args
 from skybeard.decorators import onerror
 from skybeard.mixins import PaginatorMixin
 
@@ -12,8 +12,6 @@ from .decorators import get_args_as_str_or_ask
 import logging
 
 logger = logging.getLogger(__name__)
-
-CONFIG = get_beard_config()
 
 
 class GithubBeard(PaginatorMixin, BeardChatHandler):

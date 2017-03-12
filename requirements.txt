@@ -1,3 +1,4 @@
+pygithub # For pygithub3, it needs it even though it doesn't realise it
 pygithub3
 maya
 dill
