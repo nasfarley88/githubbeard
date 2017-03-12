@@ -1,15 +1,13 @@
-from functools import partial, wraps
-
 from skybeard.beards import BeardChatHandler
 from skybeard.bearddbtable import BeardDBTable
 from skybeard.utils import get_beard_config, get_args
 from skybeard.decorators import onerror
 from skybeard.mixins import PaginatorMixin
 
-from github import Github
-from github.GithubException import UnknownObjectException
+from pygithub3 import Github
 
 from . import format_
+from .decorators import get_args_as_str_or_ask
 
 import logging
 
@@ -18,59 +16,11 @@ logger = logging.getLogger(__name__)
 CONFIG = get_beard_config()
 
 
-def get_args_as_str_or_ask(text):
-    """Gets arguments as a string or asks the question in text.
-
-    Often, telegram commands can take arguments directly after the command or
-    they can ask for information once the command has been sent. With this
-    decorator, this happens automatically, e.g.
-
-    .. code::python
-        # Map this function to /whatsyourname
-
-        @get_args_as_str_or_ask("What's your name?")
-        async def whats_your_name(self, msg, args):
-            await self.sender.sendMessage("Hello, {}.".format(args))
-
-    will behave as:
-    .. code::
-        > /whatsyourname Reginald
-        < Hello, Reginald.
-
-    or
-    .. code::
-        > /whatsyourname
-        < What's your name?
-        > Reginald
-        < Hello, Reginald.
-
-    """
-    return partial(_get_args_as_str_or_ask_decorator, text=text)
-
-
-def _get_args_as_str_or_ask_decorator(f, text):
-    """See get_args_as_str_or_ask for docs."""
-    @wraps(f)
-    async def g(beard, msg):
-        args = get_args(msg, return_string=True)
-        if not args:
-            await beard.sender.sendMessage(text)
-            resp = await beard.listener.wait()
-
-            args = resp['text']
-
-        await f(beard, msg, args)
-
-    return g
-
-
 class GithubBeard(PaginatorMixin, BeardChatHandler):
 
     __userhelp__ = "Github. In a beard."
 
     __commands__ = [
-        ("currentusersrepos", 'get_current_user_repos',
-         'Lists clickable links to repos of specifed user.'),
         ("getrepo", "get_repo",
          "Gets information about given repo specifed in 1st arg."),
         ("getpr", "get_pending_pulls",
@@ -85,7 +35,7 @@ class GithubBeard(PaginatorMixin, BeardChatHandler):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.github = Github(CONFIG['token'])
+        self.github = Github()
         self.default_repo_table = BeardDBTable(self, 'default_repo')
         self.search_repos_results = BeardDBTable(self, 'search_repos_results')
 
@@ -152,23 +102,3 @@ class GithubBeard(PaginatorMixin, BeardChatHandler):
         if pr is None:
             await self.sender.sendMessage(
                 "No pull requests found for {}.".format(repo.name))
-
-    @onerror
-    async def get_current_user_repos(self, msg):
-        args = get_args(msg)
-        try:
-            try:
-                user = self.github.get_user(args[0])
-            except IndexError:
-                user = self.github.get_user()
-        except UnknownObjectException:
-            await self.user_not_found()
-            return
-
-        name = user.name or user.login
-        await self.sender.sendMessage("Github repos for {}:".format(name))
-        await self.sender.sendChatAction(action="typing")
-        repos = ""
-        for r in user.get_repos():
-            repos += "- <a href=\"{}\">{}</a>\n".format(r.url, r.name)
-        await self.sender.sendMessage(repos, parse_mode='HTML')
